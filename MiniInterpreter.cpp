@@ -4,6 +4,7 @@
 #include <iomanip>
 #include <tuple>
 #include <cctype>
+#include <string>
 
 /*
 
@@ -85,8 +86,8 @@ void ProcessInstruction(std::string Instruction) {
 			}
 		}
 		if (!valid_instruction) {
-			//std::string ErrorLine = std::string(stoll(IP + 1, new char[10], 10));
-			std::string ErrorDescription = "Error at line ??? : Instruction '" + Instruction + "' not recognized.";
+			std::string ErrorLine = std::to_string(IP);
+			std::string ErrorDescription = "Error at line "+ ErrorLine + " : Instruction '" + Instruction + "' not recognized.";
 			ThrowMessage(ErrorDescription, 2);
 		}
 	}
