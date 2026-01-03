@@ -44,13 +44,15 @@ std::vector<std::tuple<std::string, int>> operations = {      // Operation set
 };
 
 std::vector<std::string> test_instructions = {               // Test instruction set
-	"printa Hello, World!"
+	"add 5 5",
+	"10 10 add",
+	"get 0",
+	"1 get"
 };
 
 
 
 // Message throwing function for info, warnings, and errors.
-
 
 void ThrowMessage(std::string message, int type) { // Type 0 = Info, Type 1 = Warning, Type 2 = Error	
 
@@ -133,43 +135,47 @@ If it does then it'll recognize it by it's function id and do the corresponding 
 
 */
 
-void ProcessInstruction(std::string Instruction) {
-	for (int operation_set = 0; operation_set < operations.size(); operation_set++) {
-		std::string currentoperationset = std::get<0>(operations[operation_set]);
-		int currentoperationid = std::get<1>(operations[operation_set]);
+void ProcessInstruction(std::vector<Token> Instructions) {
 
-		int valid_instruction = 0;
+	// This assumes the values are always numbers, To be updated
+	// Operation types 
+	// 0 = add, 1 = sub, 2 = mul, 3 = div, 4 = get, 5 = pop
 
-
-		// Check if instruction starts with any operation set
-
-		if (Instruction.rfind(currentoperationset, 0) == 0) {
-			if (isspace(Instruction.at(currentoperationset.length()))) {
-				valid_instruction = 1;
-				switch (currentoperationid) {
-				case 0:
-				{
-
-				}
-			/*	
-			   -TODO : Implement stack incorporation
-			    case 4:
-				{
-					std::string plaintext = Instruction.erase(Instruction.find(currentoperationset), currentoperationset.length() + 1);
-					std::cout << plaintext;
-					break;
-				}
-				
-				*/
-				}
+	int OperationType = -1; 
+	std::vector<int> OperationStack;
+	for (Token token : Instructions) {
+		if (token.type == TokenType::IDENTIFIER) {
+			if (token.value == "add") {
+				OperationType = 0;
+			}
+			if (token.value == "get") {
+				OperationType = 4;
 			}
 		}
-
-		if (!valid_instruction) {
-			std::string ErrorLine = std::to_string(IP);
-			std::string ErrorDescription = "Error at line "+ ErrorLine + " : Instruction '" + Instruction + "' not recognized.";
-			ThrowMessage(ErrorDescription, 2);
+		else if (token.type == TokenType::NUMBER) {
+			int value = std::stoi(token.value);
+			OperationStack.push_back(value);
 		}
+	}
+	switch (OperationType) {
+	case 0:
+	{
+		int operation_result = 0;
+		for (int operation : OperationStack) {
+			operation_result += operation;
+		}
+		stack.push_back(std::to_string(operation_result));
+		std::vector<int>().swap(OperationStack);
+		OperationStack.clear();
+		break;
+	}
+	case 4:
+	{
+		std::cout << stack[OperationStack.at(0)]; // Print the stack value at the given index, To be improved later
+		std::vector<int>().swap(OperationStack);
+		OperationStack.clear();
+		break;
+	}
 	}
 }
 
@@ -177,9 +183,9 @@ void ProcessInstruction(std::string Instruction) {
 
 void Interpret(std::vector<std::string> instructions) {
 	for (IP = 0; IP < instructions.size(); IP++) {
-		std::string CurrentInstruction = instructions[IP];
-		ProcessInstruction(CurrentInstruction);
+		ProcessInstruction(Tokenize(instructions[IP]));
 	}
+    
 }
 
 // For easier separation, to add binary reading
