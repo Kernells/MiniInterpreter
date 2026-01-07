@@ -5,6 +5,7 @@
 #include <tuple>
 #include <cctype>
 #include <string>
+#include <tuple>
 
 /*
 
@@ -33,21 +34,29 @@ An experimental C++ interpreter for a minimal instruction language, focusing on 
 
 int IP = 0; // Instruction pointer
 std::vector <std::string> stack; // For arithmetic operations (push, add, etc)
-std::vector <std::string> env; // Environment storage (variables, names, etc)
 
 std::vector<std::tuple<std::string, int>> operations = {      // Operation set
 	std::make_tuple("add",0),
 	std::make_tuple("sub",1),
 	std::make_tuple("mul",2),
 	std::make_tuple("div",3),
-	std::make_tuple("print",4),
+	std::make_tuple("pop",4),
+	std::make_tuple("print",5)
 };
 
 std::vector<std::string> test_instructions = {               // Test instruction set
-	"add 5 5",
-	"10 10 add",
-	"get 0",
-	"1 get"
+	"add 10 10",
+	"print 0",
+	"pop 0",
+	"20 10 sub",
+	"print 0",
+	"pop 0",
+	"pop 1",
+	"mul 2 2",
+	"print 0",
+	"pop 0",
+	"div 2 2",
+	"print 0"
 };
 
 
@@ -137,19 +146,19 @@ If it does then it'll recognize it by it's function id and do the corresponding 
 
 void ProcessInstruction(std::vector<Token> Instructions) {
 
-	// This assumes the values are always numbers, To be updated
+	// This assumes the values are always positive numbers, To be updated
 	// Operation types 
-	// 0 = add, 1 = sub, 2 = mul, 3 = div, 4 = get, 5 = pop
 
 	int OperationType = -1; 
 	std::vector<int> OperationStack;
 	for (Token token : Instructions) {
 		if (token.type == TokenType::IDENTIFIER) {
-			if (token.value == "add") {
-				OperationType = 0;
-			}
-			if (token.value == "get") {
-				OperationType = 4;
+			for (std::tuple OperationSet : operations) {
+				std::string Operation = std::get<0>(OperationSet);
+				int OperationID = std::get<1>(OperationSet);
+				if (token.value == Operation) {
+					OperationType = OperationID;
+				}
 			}
 		}
 		else if (token.type == TokenType::NUMBER) {
@@ -160,9 +169,69 @@ void ProcessInstruction(std::vector<Token> Instructions) {
 	switch (OperationType) {
 	case 0:
 	{
+		bool firstoperation = 1;
 		int operation_result = 0;
 		for (int operation : OperationStack) {
-			operation_result += operation;
+			if (firstoperation) {
+				operation_result = operation;
+				firstoperation = 0;
+			}
+			else {
+				operation_result += operation;
+			}
+		}
+		stack.push_back(std::to_string(operation_result));
+		std::vector<int>().swap(OperationStack);
+		OperationStack.clear();
+		break;
+	}
+	case 1: 
+	{
+		bool firstoperation = 1;
+		int operation_result = 0;
+		for (int operation : OperationStack) {
+			if (firstoperation) {
+				operation_result = operation;
+				firstoperation = 0;
+			}else{
+				operation_result -= operation;
+			}
+		}
+		stack.push_back(std::to_string(operation_result));
+		std::vector<int>().swap(OperationStack);
+		OperationStack.clear();
+		break;
+	}
+	case 2: 
+	{
+		bool firstoperation = 1;
+		int operation_result = 0;
+		for (int operation : OperationStack) {
+			if (firstoperation) {
+				operation_result = operation;
+				firstoperation = 0;
+			}
+			else {
+				operation_result *= operation;
+			}
+		}
+		stack.push_back(std::to_string(operation_result));
+		std::vector<int>().swap(OperationStack);
+		OperationStack.clear();
+		break;
+	}
+	case 3: 
+	{
+		bool firstoperation = 1;
+		int operation_result = 0;
+		for (int operation : OperationStack) {
+			if (firstoperation) {
+				operation_result = operation;
+				firstoperation = 0;
+			}
+			else {
+				operation_result /= operation;
+			}
 		}
 		stack.push_back(std::to_string(operation_result));
 		std::vector<int>().swap(OperationStack);
@@ -171,10 +240,16 @@ void ProcessInstruction(std::vector<Token> Instructions) {
 	}
 	case 4:
 	{
-		std::cout << stack[OperationStack.at(0)]; // Print the stack value at the given index, To be improved later
+		std::erase(stack, stack[OperationStack.at(0)]);
 		std::vector<int>().swap(OperationStack);
 		OperationStack.clear();
 		break;
+	}
+	case 5:
+	{
+		std::cout << stack[OperationStack.at(0)] << std::endl;
+		std::vector<int>().swap(OperationStack);
+		OperationStack.clear();
 	}
 	}
 }
