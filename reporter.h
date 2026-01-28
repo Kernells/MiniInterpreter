@@ -1,0 +1,9 @@
+#pragma once
+#include <string>
+#include <iostream>
+
+namespace Reporter
+{
+	void ThrowMessage(std::string message, int type); // Type 0 = Info, Type 1 = Warning, Type 2 = Error	
+};
+
