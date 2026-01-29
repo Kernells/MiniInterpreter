@@ -8,19 +8,37 @@ std::vector <std::string> Interpreter::stack; // For arithmetic operations (push
 
 // Operation Set
 
-std::vector<std::tuple<std::string, int>> Interpreter::operations = { 
-	std::make_tuple("add",0), // regular add
-	std::make_tuple("sub",1), // regular sub
-	std::make_tuple("mul",2), // regular mul
-	std::make_tuple("div",3), // regular div 
-	std::make_tuple("pop",4), // regular pop
-	std::make_tuple("push",5), // regular push
-	std::make_tuple("out",6), // std::cout
-	std::make_tuple("sadd",7), // stack add
-	std::make_tuple("ssub",8), // stack sub
-	std::make_tuple("smul",9), // stack mul
-	std::make_tuple("sdiv",10), // stack div
+std::vector<Interpreter::Operation> Interpreter::operations = { 
+
+Operation{"add", 0},   // regular add
+Operation{"sub", 1},   // regular sub
+Operation{"mul", 2},   // regular mul
+Operation{"div", 3},   // regular div
+Operation{"pop", 4},   // regular pop
+Operation{"push", 5},  // regular push
+Operation{"out", 6},   // std::cout
+Operation{"sadd", 7},  // stack add
+Operation{"ssub", 8},  // stack sub
+Operation{"smul", 9},  // stack mul
+Operation{"sdiv", 10},  // stack div
+Operation{"swap", 11},  // swap two stack values
+Operation{"dup", 12}  // duplicate a stack value and push it to the top
+
 };
+
+
+// Holy protector
+
+bool ProtectAddress(int Address, std::vector<std::string> OperationStack) {
+	if (!((Address <= stack.size() - 1) && !stack.empty())) {
+	Reporter::ThrowMessage("Stack address '" + std::to_string(Address) + "' doesn't exist", 2);
+
+	std::vector<std::string>().swap(OperationStack);
+	OperationStack.clear();
+	return true;
+	}
+	return false;
+}
 
 /*
 
@@ -40,9 +58,9 @@ void ProcessInstruction(std::vector<Token> Instructions) {
 	for (Token token : Instructions) {
 		if (token.type == TokenType::IDENTIFIER) {
 			if (OperationType == -1) {
-				for (std::tuple OperationSet : operations) {
-					std::string Operation = std::get<0>(OperationSet);
-					int OperationID = std::get<1>(OperationSet);
+				for (Operation OperationSet : operations) {
+					std::string Operation = OperationSet.opcode;
+					int OperationID = OperationSet.opid;
 					if (token.value == Operation) {
 						OperationType = OperationID;
 					}
@@ -136,7 +154,10 @@ void ProcessInstruction(std::vector<Token> Instructions) {
 	}
 	case 4:
 	{
+		if (ProtectAddress(std::stoi(OperationStack.at(0)), OperationStack)) return;
+
 		std::erase(stack, stack[std::stoi(OperationStack.at(0))]);
+	
 		std::vector<std::string>().swap(OperationStack);
 		OperationStack.clear();
 		break;
@@ -152,7 +173,10 @@ void ProcessInstruction(std::vector<Token> Instructions) {
 	}
 	case 6:
 	{
+		if (ProtectAddress(std::stoi(OperationStack.at(0)), OperationStack)) return;
+
 		std::cout << stack[std::stoi(OperationStack.at(0))] << std::endl;
+		
 		std::vector<std::string>().swap(OperationStack);
 		OperationStack.clear();
 		break;
@@ -162,14 +186,19 @@ void ProcessInstruction(std::vector<Token> Instructions) {
 		bool firstoperation = 1;
 		int operation_result = 0;
 		for (std::string rawstackaddress : OperationStack) {
+
 			int stackaddress = std::stoi(rawstackaddress);
-			if (firstoperation) {
-				operation_result = std::stoi(stack[stackaddress]);
-				firstoperation = 0;
-			}
-			else {
-				operation_result += std::stoi(stack[stackaddress]);
-			}
+
+			if (ProtectAddress(stackaddress, OperationStack)) return;
+
+				if (firstoperation) {
+					operation_result = std::stoi(stack[stackaddress]);
+					firstoperation = 0;
+				}
+				else {
+					operation_result += std::stoi(stack[stackaddress]);
+				}
+
 		}
 		stack.push_back(std::to_string(operation_result));
 		std::vector<std::string>().swap(OperationStack);
@@ -182,6 +211,9 @@ void ProcessInstruction(std::vector<Token> Instructions) {
 		int operation_result = 0;
 		for (std::string rawstackaddress : OperationStack) {
 			int stackaddress = std::stoi(rawstackaddress);
+
+			if (ProtectAddress(stackaddress, OperationStack)) return;
+
 			if (firstoperation) {
 				operation_result = std::stoi(stack[stackaddress]);
 				firstoperation = 0;
@@ -200,7 +232,11 @@ void ProcessInstruction(std::vector<Token> Instructions) {
 		bool firstoperation = 1;
 		int operation_result = 0;
 		for (std::string rawstackaddress : OperationStack) {
+
 			int stackaddress = std::stoi(rawstackaddress);
+
+			if (ProtectAddress(stackaddress, OperationStack)) return;
+
 			if (firstoperation) {
 				operation_result = std::stoi(stack[stackaddress]);
 				firstoperation = 0;
@@ -208,6 +244,7 @@ void ProcessInstruction(std::vector<Token> Instructions) {
 			else {
 				operation_result *= std::stoi(stack[stackaddress]);
 			}
+
 		}
 		stack.push_back(std::to_string(operation_result));
 		std::vector<std::string>().swap(OperationStack);
@@ -220,6 +257,9 @@ void ProcessInstruction(std::vector<Token> Instructions) {
 		int operation_result = 0;
 		for (std::string rawstackaddress : OperationStack) {
 			int stackaddress = std::stoi(rawstackaddress);
+
+			if (ProtectAddress(stackaddress, OperationStack)) return;
+
 			if (firstoperation) {
 				operation_result = std::stoi(stack[stackaddress]);
 				firstoperation = 0;
@@ -227,8 +267,38 @@ void ProcessInstruction(std::vector<Token> Instructions) {
 			else {
 				operation_result /= std::stoi(stack[stackaddress]);
 			}
+
 		}
 		stack.push_back(std::to_string(operation_result));
+		std::vector<std::string>().swap(OperationStack);
+		OperationStack.clear();
+		break;
+	}
+	case 11:
+	{
+
+		int ToSwap = std::stoi(OperationStack[0]);
+		int SwapAddress = std::stoi(OperationStack[1]);
+
+		if (ProtectAddress(ToSwap, OperationStack)) return;
+		if (ProtectAddress(SwapAddress, OperationStack)) return;
+
+		std::string tmpval = stack[ToSwap];
+
+		stack[ToSwap] = stack[SwapAddress];
+		stack[SwapAddress] = tmpval;
+
+		std::vector<std::string>().swap(OperationStack);
+		OperationStack.clear();
+		break;
+	}
+	case 12:
+	{
+		
+		if (ProtectAddress(std::stoi(OperationStack.at(0)), OperationStack)) return;
+
+		stack.push_back(stack[std::stoi(OperationStack[0])]);
+
 		std::vector<std::string>().swap(OperationStack);
 		OperationStack.clear();
 		break;
@@ -240,6 +310,11 @@ void ProcessInstruction(std::vector<Token> Instructions) {
 
 void Interpreter::Interpret(std::vector<std::string> instructions) {
 	for (IP = 0; IP < instructions.size(); IP++) {
-		ProcessInstruction(Tokenize(instructions[IP]));
+		try {
+			ProcessInstruction(Tokenize(instructions[IP]));
+		}
+		catch (const std::exception& e) {
+			Reporter::ThrowMessage(e.what(), 2);
+		}
 	}
 }

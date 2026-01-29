@@ -17,6 +17,8 @@ std::vector<Token> Lexer::Tokenize(std::string Input) {
 	bool WasQuotationMarkPresent = 0;
 	bool FirstChar = 1;
 
+	bool IsNegative = 0;
+
 	for (int i = 0; i < Input.length(); i++) {
 		char currentChar = Input.at(i);
 
@@ -33,9 +35,13 @@ std::vector<Token> Lexer::Tokenize(std::string Input) {
 
 		if (!IsQuotationMarkPresent) {
 
+		 	    if (currentChar == '-') {
+					IsNegative = !IsNegative;
+				}
+
 				if (isspace(currentChar)) {
 					if (isdigit(Stack[0])) {
-						Tokens.push_back({ TokenType::NUMBER, Stack });
+						Tokens.push_back({ TokenType::NUMBER, (IsNegative ? "-"+Stack : Stack) });
 					}
 					else {
 						Tokens.push_back({ TokenType::IDENTIFIER, Stack });
@@ -52,7 +58,7 @@ std::vector<Token> Lexer::Tokenize(std::string Input) {
 
 				if (i == Input.length() - 1) {
 					if (isdigit(Stack[0])) {
-						Tokens.push_back({ TokenType::NUMBER, Stack });
+						Tokens.push_back({ TokenType::NUMBER, (IsNegative ? "-" + Stack : Stack) });
 					}
 					else {
 						Tokens.push_back({ TokenType::IDENTIFIER, Stack });
