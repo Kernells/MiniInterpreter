@@ -21,3 +21,9 @@ void Reporter::ThrowMessage(std::string message, int type) { // Type 0 = Info, T
 	}
 	}
 }
+void Reporter::ThrowException(int type, std::string arg) { // Type 0 = Invalid Stack Address
+	switch (type) {
+	case 0:
+		Reporter::ThrowMessage("Stack address '" + arg + "' doesn't exist", 2);
+	}
+}

@@ -6,6 +6,8 @@ using namespace Lexer;
 int Interpreter::IP = 0; // // Instruction pointer
 std::vector <std::string> Interpreter::stack; // For arithmetic operations (push, add, etc)
 
+bool SkipNextOp = 0;
+
 // Operation Set
 
 std::vector<Interpreter::Operation> Interpreter::operations = { 
@@ -16,13 +18,23 @@ Operation{"mul", 2},   // regular mul
 Operation{"div", 3},   // regular div
 Operation{"pop", 4},   // regular pop
 Operation{"push", 5},  // regular push
-Operation{"out", 6},   // std::cout
+Operation{"sprint", 6},   // stack print
 Operation{"sadd", 7},  // stack add
 Operation{"ssub", 8},  // stack sub
 Operation{"smul", 9},  // stack mul
 Operation{"sdiv", 10},  // stack div
 Operation{"swap", 11},  // swap two stack values
-Operation{"dup", 12}  // duplicate a stack value and push it to the top
+Operation{"dup", 12},  // duplicate a stack value and push it to the top
+Operation{"jmp", 13},  // goes to the selected address
+Operation{"eq", 14},  // equals logical op
+Operation{"neq", 15},  // reverse equals logical op
+Operation{"lt", 16},  // lower than
+Operation{"gt", 17},  // greater than
+Operation{"lte", 18},  // lower than or equals
+Operation{"gte", 19},  // greater than or equals
+Operation{"ift", 20},  // if true, executes next action
+Operation{"iff", 21},  // if false, executes next action
+Operation{"print",22} // print
 
 };
 
@@ -31,8 +43,7 @@ Operation{"dup", 12}  // duplicate a stack value and push it to the top
 
 bool ProtectAddress(int Address, std::vector<std::string> OperationStack) {
 	if (!((Address <= stack.size() - 1) && !stack.empty())) {
-	Reporter::ThrowMessage("Stack address '" + std::to_string(Address) + "' doesn't exist", 2);
-
+	Reporter::ThrowException(0, std::to_string(Address));
 	std::vector<std::string>().swap(OperationStack);
 	OperationStack.clear();
 	return true;
@@ -54,6 +65,8 @@ void ProcessInstruction(std::vector<Token> Instructions) {
 	// Operation types 
 
 	int OperationType = -1;
+	bool ValidOperation = 0;
+
 	std::vector<std::string> OperationStack;
 	for (Token token : Instructions) {
 		if (token.type == TokenType::IDENTIFIER) {
@@ -63,7 +76,11 @@ void ProcessInstruction(std::vector<Token> Instructions) {
 					int OperationID = OperationSet.opid;
 					if (token.value == Operation) {
 						OperationType = OperationID;
+						ValidOperation = 1;
 					}
+				}
+				if (!ValidOperation) {
+					Reporter::ThrowMessage("Invalid operation '" + token.value + "'", 2);
 				}
 			}
 			else {
@@ -303,6 +320,140 @@ void ProcessInstruction(std::vector<Token> Instructions) {
 		OperationStack.clear();
 		break;
 	}
+	case 13: 
+	{
+		IP = std::stoi(OperationStack[0]) - 1;
+
+		std::vector<std::string>().swap(OperationStack);
+		OperationStack.clear();
+		break;
+	}
+	case 14:
+	{
+
+		int Address1 = std::stoi(OperationStack[0]);
+		int Address2 = std::stoi(OperationStack[1]);
+
+		if (ProtectAddress(Address1, OperationStack)) return;
+		if (ProtectAddress(Address2, OperationStack)) return;
+
+		stack.push_back(std::to_string(stack[Address1] == stack[Address2]));
+
+		std::vector<std::string>().swap(OperationStack);
+		OperationStack.clear();
+		break;
+	}
+	case 15:
+	{
+
+		int Address1 = std::stoi(OperationStack[0]);
+		int Address2 = std::stoi(OperationStack[1]);
+
+		if (ProtectAddress(Address1, OperationStack)) return;
+		if (ProtectAddress(Address2, OperationStack)) return;
+
+		stack.push_back(std::to_string(!(stack[Address1] == stack[Address2])));
+
+		std::vector<std::string>().swap(OperationStack);
+		OperationStack.clear();
+		break;
+	}
+	case 16:
+	{
+
+		int Address1 = std::stoi(OperationStack[0]);
+		int Address2 = std::stoi(OperationStack[1]);
+
+		if (ProtectAddress(Address1, OperationStack)) return;
+		if (ProtectAddress(Address2, OperationStack)) return;
+
+		stack.push_back(std::to_string(std::stoi(stack[Address1]) < std::stoi(stack[Address2])));
+
+		std::vector<std::string>().swap(OperationStack);
+		OperationStack.clear();
+		break;
+	}
+	case 17:
+	{
+
+		int Address1 = std::stoi(OperationStack[0]);
+		int Address2 = std::stoi(OperationStack[1]);
+
+		if (ProtectAddress(Address1, OperationStack)) return;
+		if (ProtectAddress(Address2, OperationStack)) return;
+
+		stack.push_back(std::to_string(std::stoi(stack[Address1]) > std::stoi(stack[Address2])));
+
+		std::vector<std::string>().swap(OperationStack);
+		OperationStack.clear();
+		break;
+	}
+	case 18:
+	{
+
+		int Address1 = std::stoi(OperationStack[0]);
+		int Address2 = std::stoi(OperationStack[1]);
+
+		if (ProtectAddress(Address1, OperationStack)) return;
+		if (ProtectAddress(Address2, OperationStack)) return;
+
+		stack.push_back(std::to_string(std::stoi(stack[Address1]) <= std::stoi(stack[Address2])));
+
+		std::vector<std::string>().swap(OperationStack);
+		OperationStack.clear();
+		break;
+	}
+	case 19:
+	{
+
+		int Address1 = std::stoi(OperationStack[0]);
+		int Address2 = std::stoi(OperationStack[1]);
+
+		if (ProtectAddress(Address1, OperationStack)) return;
+		if (ProtectAddress(Address2, OperationStack)) return;
+
+		stack.push_back(std::to_string(std::stoi(stack[Address1]) >= std::stoi(stack[Address2])));
+
+		std::vector<std::string>().swap(OperationStack);
+		OperationStack.clear();
+		break;
+	}
+	case 20:
+	{
+
+		int Address = std::stoi(OperationStack[0]);
+
+		if (ProtectAddress(Address, OperationStack)) return;
+
+		if (!std::stoi(stack[Address])) SkipNextOp = 1;
+
+		std::vector<std::string>().swap(OperationStack);
+		OperationStack.clear();
+		break;
+	}
+	case 21:
+	{
+
+		int Address = std::stoi(OperationStack[0]);
+
+		if (ProtectAddress(Address, OperationStack)) return;
+
+		if (std::stoi(stack[Address])) SkipNextOp = 1;
+
+		std::vector<std::string>().swap(OperationStack);
+		OperationStack.clear();
+		break;
+	}
+	case 22:
+	{
+		for (std::string Output : OperationStack) {
+			std::cout << Output;
+		}
+
+		std::vector<std::string>().swap(OperationStack);
+		OperationStack.clear();
+		break;
+	}
 	}
 }
 
@@ -311,7 +462,12 @@ void ProcessInstruction(std::vector<Token> Instructions) {
 void Interpreter::Interpret(std::vector<std::string> instructions) {
 	for (IP = 0; IP < instructions.size(); IP++) {
 		try {
-			ProcessInstruction(Tokenize(instructions[IP]));
+			if (!SkipNextOp) {
+				ProcessInstruction(Tokenize(instructions[IP]));
+			}
+			else {
+				SkipNextOp = 0;
+			}
 		}
 		catch (const std::exception& e) {
 			Reporter::ThrowMessage(e.what(), 2);
