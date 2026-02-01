@@ -8,6 +8,9 @@ std::vector <std::string> Interpreter::stack; // For arithmetic operations (push
 
 bool SkipNextOp = 0;
 
+bool PreReturnToIP, ReturnToIP = 0;
+int PrevIP = 0;
+
 // Operation Set
 
 std::vector<Interpreter::Operation> Interpreter::operations = { 
@@ -34,7 +37,8 @@ Operation{"lte", 18},  // lower than or equals
 Operation{"gte", 19},  // greater than or equals
 Operation{"ift", 20},  // if true, executes next action
 Operation{"iff", 21},  // if false, executes next action
-Operation{"print",22} // print
+Operation{"print",22}, // print
+Operation{"invoke",23} // invokes a single instruction on the instructions
 
 };
 
@@ -447,11 +451,18 @@ void ProcessInstruction(std::vector<Token> Instructions) {
 	case 22:
 	{
 		for (std::string Output : OperationStack) {
-			std::cout << Output;
+			std::cout << Output << std::endl;
 		}
 
 		std::vector<std::string>().swap(OperationStack);
 		OperationStack.clear();
+		break;
+	}
+	case 23:
+	{
+        PreReturnToIP = 1;
+		PrevIP = IP;
+		IP = std::stoi(OperationStack[0]) -1;
 		break;
 	}
 	}
@@ -463,7 +474,17 @@ void Interpreter::Interpret(std::vector<std::string> instructions) {
 	for (IP = 0; IP < instructions.size(); IP++) {
 		try {
 			if (!SkipNextOp) {
+				
 				ProcessInstruction(Tokenize(instructions[IP]));
+
+				if (ReturnToIP){
+					IP = PrevIP;
+					ReturnToIP = 0;
+				}else if (PreReturnToIP){
+					PreReturnToIP = 0;
+					ReturnToIP = 1;
+				}
+				
 			}
 			else {
 				SkipNextOp = 0;

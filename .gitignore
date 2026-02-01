@@ -17,6 +17,7 @@
 mono_crash.*
 
 # Build results
+build/
 [Dd]ebug/
 [Dd]ebugPublic/
 [Rr]elease/
@@ -230,6 +231,11 @@ _pkginfo.txt
 !?*.[Cc]ache/
 
 # Others
+.clangd
+CMakeLists.txt
+MiniInterpreter.slnx
+MiniInterpreter.vcxproj
+MiniInterpreter.vcxproj.filters
 ClientBin/
 ~$*
 *~
