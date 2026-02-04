@@ -33,14 +33,10 @@ An experimental C++ interpreter for a minimal instruction language, focusing on 
 */
 
 std::vector<std::string> test_instructions = {               // Test instruction set
-"push \"Hello, world!\"",
+"push 5",
 "sprint 0",
-"print 1",
-"invoke 1",
-"print \"Hello, this is the continuation\"",
-"print 3",
-"print \"Test\"",
-"invoke 6"
+"neg 0",
+"sprint 0"
 };
 
 // To add binary reading

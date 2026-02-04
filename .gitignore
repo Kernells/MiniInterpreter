@@ -231,6 +231,7 @@ _pkginfo.txt
 !?*.[Cc]ache/
 
 # Others
+c_cpp_properties.json
 .clangd
 CMakeLists.txt
 MiniInterpreter.slnx

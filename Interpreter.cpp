@@ -38,7 +38,8 @@ Operation{"gte", 19},  // greater than or equals
 Operation{"ift", 20},  // if true, executes next action
 Operation{"iff", 21},  // if false, executes next action
 Operation{"print",22}, // print
-Operation{"invoke",23} // invokes a single instruction on the instructions
+Operation{"invoke",23}, // invokes a single instruction on the instructions
+Operation{"neg",24} // turns the value on the stack to negative
 
 };
 
@@ -463,6 +464,15 @@ void ProcessInstruction(std::vector<Token> Instructions) {
         PreReturnToIP = 1;
 		PrevIP = IP;
 		IP = std::stoi(OperationStack[0]) -1;
+		break;
+	}
+	case 24:
+	{
+        int Address = std::stoi(OperationStack[0]);
+		if (ProtectAddress(Address, OperationStack)) return;
+        
+		stack[Address] = std::to_string(-(std::stoi(stack[Address])));
+
 		break;
 	}
 	}
